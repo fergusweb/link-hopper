@@ -3,13 +3,12 @@
 Plugin Name:	Link Hopper
 Plugin URI:		http://www.fergusweb.net/software/linkhopper/
 Description:	Provides an easy interface to mask outgoing links using <code>site.com/hop/XXXXXX</code> syntax.  Configure hops via wp-admin.
-Version:		1.0
+Version:		1.2
 Author:			Anthony Ferguson
 Author URI:		http://www.fergusweb.net
 */
 
 
-// delete_option('optLinkHopper');
 // Load default options
 $opts = array(
 	'baseURL'	=> '/hop/',
@@ -26,6 +25,7 @@ function doLinkHopper() {
 	$fullURL = 'http://'.$_SERVER['HTTP_HOST'].$reqURL;
 	$opts = get_option('optLinkHopper');
 	$hopURL = $opts['baseURL'];
+	
 	if (stristr($fullURL, $hopURL) !== false) {
 		$reqArr = explode('/', $reqURL);
 		foreach ($reqArr as $key=>$token) {
@@ -33,10 +33,11 @@ function doLinkHopper() {
 		}
 		$tag = array_pop($reqArr);
 		if (array_key_exists($tag, $opts['hops'])) {
-			header('Location: '.$opts['hops'][$tag]);
+			$redir = $opts['hops'][$tag];
 		} else {
-			header('Location: '.get_bloginfo('home'));
+			$redir = get_bloginfo('home');
 		}
+		header('Location: '.$redir);
 		die;
 	}
 }
@@ -49,7 +50,7 @@ class LinkHopper_Admin {
 	function add_config_page() {
 		if (function_exists('add_management_page')) {
 			add_management_page('LinkHopper Config', 'Link Hopper', 10, basename(__FILE__), array('LinkHopper_Admin','adminConfigPage'));
-			add_filter( 'plugin_action_links', array( 'LinkHopper_Admin', 'addPluginConfigLink'), 10, 2 );
+			add_filter( 'plugin_action_links', array('LinkHopper_Admin', 'addPluginConfigLink'), 10, 2 );
 			add_action('wp_print_scripts', array('LinkHopper_Admin', 'adminLoadJS'));
 		}
 	}
@@ -99,6 +100,7 @@ class LinkHopper_Admin {
 				unset($hops[$hopName]);
 			}
 			$opts['hops'] = $hops;
+			$opts['baseURL'] = stripslashes($_POST['baseURL']);
 			update_option('optLinkHopper', $opts);
 			echo '<div id="message" class="updated fade"><p><strong>'.__('Options saved.').'</strong></p></div>'."\n";
 		}
