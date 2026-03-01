@@ -4,6 +4,9 @@ Tags:				links, redirect, affiliate, masking
 Tested up to:		6.9
 Requires at least:	6.0
 Stable tag:			1.5.0
+Requires PHP:       8.3
+License:            GPLv3 or later
+License URI:        https://www.gnu.org/licenses/gpl-3.0.html
 
 Link Hopper lets you set up tidy link redirection to other websites.
 
@@ -37,7 +40,7 @@ No, not at this time. It's a simple link-redirect script.
 == Changelog ==
 
 = 1.5.0 = 
-* Rewriting code
+* Rewrite the plugin code for modern best practices
 * Better dev environment
 * Github to SVN deployment
 
