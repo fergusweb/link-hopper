@@ -3,7 +3,7 @@ Contributors:		Anthony Ferguson
 Tags:				links, redirect, affiliate, masking
 Tested up to:		6.9
 Requires at least:	6.0
-Stable tag:			1.5.0
+Stable tag:			3.0
 Requires PHP:       8.3
 License:            GPLv3 or later
 License URI:        https://www.gnu.org/licenses/gpl-3.0.html
@@ -39,7 +39,7 @@ No, not at this time. It's a simple link-redirect script.
 
 == Changelog ==
 
-= 1.5.0 = 
+= 3.0 = 
 * Rewrite the plugin code for modern best practices
 * Better dev environment
 * Github to SVN deployment

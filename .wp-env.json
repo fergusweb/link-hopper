@@ -7,5 +7,6 @@
         "WP_DEBUG": true,
         "WP_DEBUG_DISPLAY": true,
         "SCRIPT_DEBUG": false
-    }
+    },
+    "testsEnvironment": false
 }

@@ -19,7 +19,7 @@ class Link_Hopper_Activator {
 	 */
 	public static function activate() {
 		$options  = get_option( LINK_HOPPER_OPTION_KEY, array() );
-		$base_url = ! empty( $options['base_url'] ) ? $options['base_url'] : 'hop';
+		$base_url = ! empty( $options['baseURL'] ) ? $options['baseURL'] : 'hop';
 
 		add_rewrite_rule(
 			'^' . preg_quote( $base_url, '/' ) . '/([^/]+)/?$',

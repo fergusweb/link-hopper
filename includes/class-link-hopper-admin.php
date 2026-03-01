@@ -48,8 +48,8 @@ class Link_Hopper_Admin {
 			$this->options = wp_parse_args(
 				get_option( LINK_HOPPER_OPTION_KEY, array() ),
 				array(
-					'base_url' => 'hop',
-					'hops'     => array(),
+					'baseURL' => 'hop',
+					'hops'    => array(),
 				)
 			);
 		}
@@ -64,7 +64,7 @@ class Link_Hopper_Admin {
 	 */
 	private function get_base_url() {
 		$options = $this->get_options();
-		return $options['base_url'];
+		return $options['baseURL'];
 	}
 
 	// =========================================================================
@@ -149,8 +149,8 @@ class Link_Hopper_Admin {
 	 */
 	public function sanitize_options( $input ) {
 		$sanitized = array(
-			'base_url' => 'hop',
-			'hops'     => array(),
+			'baseURL' => 'hop',
+			'hops'    => array(),
 		);
 
 		if ( ! is_array( $input ) ) {
@@ -158,20 +158,18 @@ class Link_Hopper_Admin {
 		}
 
 		// Base URL: strip slashes, allow only letters, numbers, hyphens, underscores.
-		if ( ! empty( $input['base_url'] ) ) {
-			$base_url = sanitize_text_field( $input['base_url'] );
+		if ( ! empty( $input['baseURL'] ) ) {
+			$base_url = sanitize_text_field( $input['baseURL'] );
 			$base_url = trim( $base_url, '/' );
 			$base_url = preg_replace( '/[^a-zA-Z0-9_-]/', '', $base_url );
 
 			if ( ! empty( $base_url ) ) {
-				$sanitized['base_url'] = $base_url;
+				$sanitized['baseURL'] = $base_url;
 			}
 		}
 
-		// Hops: validate each row.
+		// Hops: validate each row and store as name => url.
 		if ( ! empty( $input['hops'] ) && is_array( $input['hops'] ) ) {
-			$seen_names = array();
-
 			foreach ( $input['hops'] as $hop ) {
 				if ( ! is_array( $hop ) ) {
 					continue;
@@ -183,21 +181,12 @@ class Link_Hopper_Admin {
 
 				$url = isset( $hop['url'] ) ? esc_url_raw( trim( $hop['url'] ) ) : '';
 
-				// Skip blank or incomplete rows.
-				if ( empty( $name ) || empty( $url ) ) {
+				// Skip blank or incomplete rows, and skip duplicates (last write wins replaced by first).
+				if ( empty( $name ) || empty( $url ) || isset( $sanitized['hops'][ $name ] ) ) {
 					continue;
 				}
 
-				// Skip duplicate hop names.
-				if ( in_array( $name, $seen_names, true ) ) {
-					continue;
-				}
-
-				$seen_names[]        = $name;
-				$sanitized['hops'][] = array(
-					'name' => $name,
-					'url'  => $url,
-				);
+				$sanitized['hops'][ $name ] = $url;
 			}
 		}
 
@@ -277,38 +266,44 @@ class Link_Hopper_Admin {
 	 */
 	private function get_admin_js() {
 		return <<<'JS'
-( function ( $ ) {
+( function () {
 	'use strict';
 
 	var rowIndex = parseInt( linkHopperData.rowCount, 10 );
 
-	function updateTestLink( $row ) {
-		var hopName   = $row.find( '.link-hopper-hop-name' ).val().trim();
-		var $testCell = $row.find( '.col-test' );
+	function updateTestLink( row ) {
+		var hopName  = row.querySelector( '.link-hopper-hop-name' ).value.trim();
+		var testCell = row.querySelector( '.col-test' );
 
 		if ( hopName ) {
 			var href = linkHopperData.baseUrl + encodeURIComponent( hopName ) + '/';
-			$testCell.html( '<a href="' + href + '" target="_blank" rel="noopener">' + linkHopperData.testText + '</a>' );
+			testCell.innerHTML = '<a href="' + href + '" target="_blank" rel="noopener">' + linkHopperData.testText + '</a>';
 		} else {
-			$testCell.html( '&nbsp;' );
+			testCell.innerHTML = '&nbsp;';
 		}
 	}
 
-	$( '#link-hopper-add-row' ).on( 'click', function () {
-		var html = linkHopperData.rowTemplate.replace( /__INDEX__/g, rowIndex );
-		$( '#link-hopper-hops-body' ).append( html );
+	document.getElementById( 'link-hopper-add-row' ).addEventListener( 'click', function () {
+		var template = document.createElement( 'template' );
+		template.innerHTML = linkHopperData.rowTemplate.replace( /__INDEX__/g, rowIndex );
+		document.getElementById( 'link-hopper-hops-body' ).appendChild( template.content.firstElementChild );
 		rowIndex++;
 	} );
 
-	$( document ).on( 'click', '.link-hopper-remove-row', function () {
-		$( this ).closest( 'tr' ).remove();
+	document.addEventListener( 'click', function ( e ) {
+		var btn = e.target.closest( '.link-hopper-remove-row' );
+		if ( btn ) {
+			btn.closest( 'tr' ).remove();
+		}
 	} );
 
-	$( document ).on( 'input', '.link-hopper-hop-name', function () {
-		updateTestLink( $( this ).closest( 'tr' ) );
+	document.addEventListener( 'input', function ( e ) {
+		if ( e.target.classList.contains( 'link-hopper-hop-name' ) ) {
+			updateTestLink( e.target.closest( 'tr' ) );
+		}
 	} );
 
-} ( jQuery ) );
+} () );
 JS;
 	}
 
@@ -371,8 +366,8 @@ JS;
 			<input
 				type="text"
 				id="link_hopper_base_url"
-				name="<?php echo esc_attr( LINK_HOPPER_OPTION_KEY ); ?>[base_url]"
-				value="<?php echo esc_attr( $options['base_url'] ); ?>"
+				name="<?php echo esc_attr( LINK_HOPPER_OPTION_KEY ); ?>[baseURL]"
+				value="<?php echo esc_attr( $options['baseURL'] ); ?>"
 				class="regular-text"
 			/>
 			<span>/</span>
@@ -403,8 +398,9 @@ JS;
 			</thead>
 			<tbody id="link-hopper-hops-body">
 				<?php
-				foreach ( $hops as $index => $hop ) {
-					$this->render_hop_row( $index, $hop['name'], $hop['url'], $base_url );
+				$index = 0;
+				foreach ( $hops as $name => $url ) {
+					$this->render_hop_row( $index++, $name, $url, $base_url );
 				}
 				?>
 			</tbody>

@@ -8,4 +8,5 @@ node-modules
 .wp-env.json
 package.json
 package-lock.json
+pnpm-lock.json
 README.md

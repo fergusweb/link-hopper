@@ -46,8 +46,8 @@ class Link_Hopper_Redirector {
 			$this->options = wp_parse_args(
 				get_option( LINK_HOPPER_OPTION_KEY, array() ),
 				array(
-					'base_url' => 'hop',
-					'hops'     => array(),
+					'baseURL' => 'hop',
+					'hops'    => array(),
 				)
 			);
 		}
@@ -62,7 +62,7 @@ class Link_Hopper_Redirector {
 	 */
 	private function get_base_url() {
 		$options = $this->get_options();
-		return $options['base_url'];
+		return $options['baseURL'];
 	}
 
 	/**
@@ -102,11 +102,9 @@ class Link_Hopper_Redirector {
 
 		$options = $this->get_options();
 
-		foreach ( $options['hops'] as $hop ) {
-			if ( ! empty( $hop['name'] ) && $hop['name'] === $hop_name && ! empty( $hop['url'] ) ) {
-				wp_redirect( $hop['url'], 302 ); // phpcs:ignore WordPress.Security.SafeRedirect
-				exit;
-			}
+		if ( ! empty( $options['hops'][ $hop_name ] ) ) {
+			wp_redirect( $options['hops'][ $hop_name ], 302 ); // phpcs:ignore WordPress.Security.SafeRedirect
+			exit;
 		}
 	}
 
@@ -117,8 +115,8 @@ class Link_Hopper_Redirector {
 	 * @param mixed $new_value New option value.
 	 */
 	public function maybe_flush_rewrite_rules( $old_value, $new_value ) {
-		$old_base = isset( $old_value['base_url'] ) ? $old_value['base_url'] : '';
-		$new_base = isset( $new_value['base_url'] ) ? $new_value['base_url'] : '';
+		$old_base = isset( $old_value['baseURL'] ) ? $old_value['baseURL'] : '';
+		$new_base = isset( $new_value['baseURL'] ) ? $new_value['baseURL'] : '';
 
 		if ( $old_base !== $new_base ) {
 			$this->options = null; // Clear cache so register_rewrite_rules picks up new slug.
