@@ -3,7 +3,7 @@
 Plugin Name:	Link Hopper
 Plugin URI:		http://www.fergusweb.net/software/linkhopper/
 Description:	Provides an easy interface to mask outgoing links using <code>site.com/hop/XXXXXX</code> syntax.  Configure hops via wp-admin.
-Version:		1.2
+Version:		1.3
 Author:			Anthony Ferguson
 Author URI:		http://www.fergusweb.net
 */
@@ -11,12 +11,13 @@ Author URI:		http://www.fergusweb.net
 
 // Load default options
 $opts = array(
-	'baseURL'	=> '/hop/',
+	'baseURL'	=> 'hop',
 	'hops'		=> array(
 						'google' => 'http://www.google.com'
 					)
 );
 add_option('optLinkHopper', $opts);
+//update_option('optLinkHopper', $opts);
 
 
 add_action('init', 'doLinkHopper');
@@ -24,8 +25,9 @@ function doLinkHopper() {
 	$reqURL = $_SERVER['REQUEST_URI'];
 	$fullURL = 'http://'.$_SERVER['HTTP_HOST'].$reqURL;
 	$opts = get_option('optLinkHopper');
-	$hopURL = $opts['baseURL'];
+	$hopURL = '/'.$opts['baseURL'].'/';
 	
+	if ($hopURL != '')
 	if (stristr($fullURL, $hopURL) !== false) {
 		$reqArr = explode('/', $reqURL);
 		foreach ($reqArr as $key=>$token) {
@@ -67,15 +69,10 @@ class LinkHopper_Admin {
 	}
 	
 	function adminLoadJS() {
-		if (is_admin()) {
-			$formcheckSrc = path_join(WP_PLUGIN_URL, basename( dirname( __FILE__ ) ) . '/formcheck.js' );
-			$formcheckCSS = path_join(WP_PLUGIN_URL, basename( dirname( __FILE__ ) ) . '/formcheck.css' );
-			wp_register_script('mootools', 'http://ajax.googleapis.com/ajax/libs/mootools/1.2.1/mootools-yui-compressed.js', array(), '1.2.1');
-			wp_register_script('formcheck', $formcheckSrc, array('mootools'), '1.4.2');
-			wp_enqueue_script('mootools');
-			wp_enqueue_script('formcheck');
-			echo '<link rel="stylesheet" href="'.$formcheckCSS.'" />'."\n";
-		}
+		if (!is_admin()) { return; }
+		$formcheckJS = path_join(WP_PLUGIN_URL, basename( dirname( __FILE__ ) ) . '/jquery.validate.js' );
+		wp_register_script('jquery-validate', $formcheckJS, array('jquery'), '1.5.2');
+		wp_enqueue_script('jquery-validate');
 	}
 	
 	function adminConfigPage() {
@@ -83,10 +80,7 @@ class LinkHopper_Admin {
 		$opts = get_option('optLinkHopper');
 		// Save Updated Options
 		if (isset($_POST['SaveLinkhopperOptions'])) {
-			if (!wp_verify_nonce($_POST['_wpnonce'], 'doLinkHopper')) {
-				echo '<p class="alert">Invalid Security</p>'."\n";
-				return;
-			}
+			if (!wp_verify_nonce($_POST['_wpnonce'], 'doLinkHopper')) { echo '<p class="alert">Invalid Security</p>'."\n"; return; }
 			$hops = array();
 			foreach ($_POST['hopName'] as $key=>$hopName) {
 				$hopName = trim(stripslashes($hopName));
@@ -116,7 +110,8 @@ class LinkHopper_Admin {
 	<th><label for="hopBaseURL"><?php _e('Base URL'); ?></label></th>
   </tr>
   <tr>
-	<td><input class="widefat validate['required']" name="baseURL" id="hopBaseURL" value="<?php echo $opts['baseURL']; ?>" /></td>
+	<td>/ <input class="widefat required alphanum" name="baseURL" id="hopBaseURL" value="<?php echo $opts['baseURL']; ?>" /> /
+    <p class="note">Recommend you use a single word here, like "hop" or "out"</p></td>
   </tr>
 </table>
 
@@ -125,34 +120,38 @@ class LinkHopper_Admin {
 	<th><?php _e('Hop Name'); ?></th>
     <th><?php _e('Destination URL'); ?></th>
     <th><?php _e('Delete?'); ?></th>
+    <th>&nbsp;</th>
   </tr>
 <?php
 foreach ($opts['hops'] as $hopName=>$hopURL) {
 ?>
   <tr>
-	<td class="name"><input class="name widefat validate['required','alphanum']" type="text" name="hopName[]" value="<?php echo $hopName; ?>" /></td>
-    <td class="url"><input class="url widefat validate['required','url']" type="text" name="hopURL[]" value="<?php echo $hopURL; ?>" /></td>
+	<td class="name"><input class="name widefat alphanum" type="text" name="hopName[]" value="<?php echo $hopName; ?>" /></td>
+    <td class="url"><input class="url widefat" type="text" name="hopURL[]" value="<?php echo $hopURL; ?>" /></td>
     <td class="delete"><label><input class="delete" type="checkbox" name="hopDel[]" value="<?php echo $hopName; ?>" /></label></td>
+    <td class="test"><a target="blank" href="<?php echo get_bloginfo('wpurl').'/'.$opts['baseURL'].'/'.$hopName; ?>">Test</a></td>
   </tr>
 <?php
 } // foreach
 for ($i=0; $i<2; $i++) {
 ?>
   <tr>
-	<td class="name"><input class="name widefat validate['alphanum']" type="text" name="hopName[]" value="" /></td>
-    <td class="url"><input class="url widefat validate['url']" type="text" name="hopURL[]" value="" /></td>
+	<td class="name"><input class="name widefat alphanum" type="text" name="hopName[]" value="" /></td>
+    <td class="url"><input class="url widefat" type="text" name="hopURL[]" value="" /></td>
     <td class="delete">&nbsp;</td>
+    <td class="link">&nbsp;</td>
   </tr>
 <?php
 } // for
 ?>
   
-  <tr><td colspan="3" class="bttn">
+  <tr><td colspan="4" class="bttn">
   <input type="submit" name="SaveLinkhopperOptions" value="<?php _e('Save Changes'); ?>" id="Save" class="button-primary" />
   </td></tr>
 </table>
 </form>
 </div><!-- inner -->
+
 <div class="donate">
 <table class="widefat">
 <tr><th>Buy me a beer</th></tr>
@@ -166,29 +165,38 @@ for ($i=0; $i<2; $i++) {
 <p>If you find the LinkHopper useful, and you're feeling generous, buy the poor author a beer.</p>
 <p>He's thirsty!<br />(This is not required)</p>
 </td></tr></table>
-</div>
+</div><!-- donate -->
+
 </div><!-- wrap -->
 <style><!--
 .wrap .inner { float:left; }
 #linkhopCFG table.widefat { width:63em; margin:0.6em 0; }
+#linkhopCFG #hopBaseURL { width:10em; }
 table.widefat th { background:#DDD; }
 #linkhopCFG input.name	{ width:15em; }
 #linkhopCFG input.url	{ width:40em; }
 #linkhopCFG td.bttn		{ text-align:right; padding-right:3em; }
 #linkhopCFG input.widefat{border-color:#21759B; }
 #linkhopCFG td.delete label {	display:block; text-align:center; }
-#baseHopCfg input.widefat { width:40em;  }
+#baseHopCfg input.widefat { width:40em; }
+
+#linkhopCFG input.widefat, #linkhopCFG input.error { padding:3px;}
+
+#linkhopCFG label.error { margin-left:10px; padding:3px 0.6em; display:none; }
+
 
 div.donate { width:17em; float:left; margin:4em 0 0 3em; }
 .donate table th, .donate td { text-align:center; }
 --></style>
-<script><!--
-new FormCheck('linkhopCFG');
+<script type="text/javascript"><!--
+jQuery(document).ready(function($){
+    $("#linkhopCFG").validate();
+});
 --></script>
 		<?php
-    }
-}
-}
+    } //adminConfigPage
+} // class
+} // class exists
 
 add_action('admin_menu', array('LinkHopper_Admin','add_config_page'));
 
