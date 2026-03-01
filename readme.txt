@@ -1,9 +1,9 @@
 === Link Hopper ===
 Contributors:		Anthony Ferguson
 Tags:				links, redirect, affiliate, masking
-Tested up to:		3.5
-Requires at least:	2.5
-Stable tag:			1.4
+Tested up to:		6.9
+Requires at least:	6.0
+Stable tag:			1.5.0
 
 Link Hopper lets you set up tidy link redirection to other websites.
 
@@ -35,6 +35,11 @@ No, not at this time. It's a simple link-redirect script.
 
 
 == Changelog ==
+
+= 1.5.0 = 
+* Rewriting code
+* Better dev environment
+* Github to SVN deployment
 
 = 1.4 =
 * Completely re-written code base

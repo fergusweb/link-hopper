@@ -1,24 +1,32 @@
 <?php
-/*
-Plugin Name:	Link Hopper
-Plugin URI:		http://www.fergusweb.net/software/linkhopper/
-Description:	Provides an easy interface to mask outgoing links using <code>site.com/hop/XXXXXX</code> syntax.  Configure hops via wp-admin.
-Version:		1.4
-Author:			Anthony Ferguson
-Author URI:		http://www.fergusweb.net
-*/
-
-
 /**
-Note: We COULD call a logging script before doing wp_redirect
+ * The main plugin file
+ *
+ * This file is read by WordPress to generate the plugin information in the plugin
+ * admin area. This file also includes all of the dependencies used by the plugin,
+ * registers the activation and deactivation functions, and defines a function
+ * that starts the plugin.
+ * 
+ * Plugin Name:		Link Hopper
+ * Plugin URI:		http://www.fergusweb.net/software/linkhopper/
+ * Description:		Provides an easy interface to mask outgoing links using <code>site.com/hop/XXXXXX</code> syntax.  Configure hops via wp-admin.
+ * Version:			1.4
+ * Author:			Anthony Ferguson
+ * Author URI:		http://www.fergusweb.net
+ * License:     	GPLv3 or later
+ * License URI: 	https://www.gnu.org/licenses/gpl-3.0.html
+ * 
+ * @package		link_hopper
+ */
 
-Not sure how to store that data though.
-	Could be a row an the _options table, a simple integer increment (click counter)
-	Could store as custom post-types to include more comprehensive data (date/time of click, user agent, IP, logged-in user, etc)
+// If this file is called directly, abort.
+if ( ! defined( 'WPINC' ) ) {
+	die;
+}
 
-Not sure about referencing back history data either.  The hop_name is prone to change.  Would need to store a combo of hop_name+hop_url maybe?
 
-*/
+
+
 
 new LinkHopper();
 
@@ -216,5 +224,3 @@ jQuery(document).ready(function($) {
 	
 }
 
-
-?>

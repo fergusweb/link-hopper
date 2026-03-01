@@ -1,0 +1,15 @@
+{
+  "name": "link-hopper",
+  "version": "1.5.0",
+  "repository": "https://github.com/fergusweb/link-hopper",
+  "license": "GPL-3.0",
+  "scripts": {
+    "wp-env": "NODE_OPTIONS='--dns-result-order=ipv4first --no-network-family-autoselection' wp-env",
+    "start": "pnpm run wp-env start",
+    "debug": "pnpm run wp-env start --xdebug",
+    "stop": "pnpm run wp-env stop"
+  },
+  "devDependencies": {
+    "@wordpress/env": "^11.0.0"
+  }
+}

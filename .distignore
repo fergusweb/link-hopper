@@ -1,0 +1,11 @@
+assets/*.psd
+node-modules
+.distignore
+.editorconfig
+.git
+.github
+.gitignore
+.wp-env.json
+package.json
+package-lock.json
+README.md
